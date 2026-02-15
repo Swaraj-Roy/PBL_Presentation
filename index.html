@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hyperlocal Urban Heat Index Forecasting | PBL 2025</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* ─── RESET & ROOT ─────────────────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg:        #0a0c10;
+      --bg2:       #0f1318;
+      --bg3:       #141820;
+      --border:    rgba(255,255,255,0.07);
+      --accent:    #ff5e1a;
+      --accent2:   #ffb347;
+      --teal:      #00e5c8;
+      --blue:      #3b82f6;
+      --text:      #e8ecf0;
+      --muted:     #7a8898;
+      --card:      rgba(255,255,255,0.04);
+      --glow:      rgba(255,94,26,0.15);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── SCROLLBAR ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+    /* ─── NAV ───────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px;
+      height: 60px;
+      background: rgba(10,12,16,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .nav-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; font-weight: 700; color: #000;
+      letter-spacing: -0.5px;
+    }
+    .nav-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 700;
+      color: var(--text); letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .nav-links {
+      display: flex; gap: 6px; list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; color: var(--muted);
+      text-decoration: none; padding: 6px 14px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      transition: all 0.2s;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .nav-links a:hover {
+      color: var(--accent); border-color: var(--accent);
+      background: rgba(255,94,26,0.06);
+    }
+    .nav-timer {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px; color: var(--teal);
+      background: rgba(0,229,200,0.07);
+      border: 1px solid rgba(0,229,200,0.2);
+      padding: 5px 12px; border-radius: 4px;
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── HERO ──────────────────────────────────────────────────── */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      text-align: center;
+      padding: 80px 40px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,94,26,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,94,26,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%);
+    }
+    .hero-glow {
+      position: absolute; top: 20%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(255,94,26,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,94,26,0.1);
+      border: 1px solid rgba(255,94,26,0.3);
+      border-radius: 100px;
+      padding: 6px 18px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; color: var(--accent);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 32px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero-badge::before {
+      content: ''; width: 6px; height: 6px;
+      background: var(--accent); border-radius: 50%;
+      animation: pulse 1.5s ease infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.4)} }
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.4rem, 5vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      max-width: 860px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    h1 .accent { color: var(--accent); }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 640px;
+      margin-bottom: 40px;
+      font-style: italic;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+    .hero-meta {
+      display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;
+      animation: fadeUp 0.7s 0.3s ease both;
+      margin-bottom: 48px;
+    }
+    .hero-meta-item {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .hero-meta-item span { color: var(--text); }
+    .hero-stats {
+      display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.7s 0.4s ease both;
+    }
+    .hero-stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 28px;
+      text-align: center;
+      position: relative; overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .hero-stat:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .hero-stat::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .hero-stat:hover::before { opacity: 1; }
+    .hero-stat-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem; font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .hero-stat-label {
+      font-size: 0.72rem; color: var(--muted);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* ─── SECTION WRAPPER ───────────────────────────────────────── */
+    section {
+      padding: 90px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 56px;
+    }
+    .section-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; color: var(--accent);
+      letter-spacing: 0.12em;
+      opacity: 0.8;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800; letter-spacing: -0.02em;
+    }
+    .section-title .teal { color: var(--teal); }
+    .section-title .accent { color: var(--accent); }
+    .section-line {
+      flex: 1; height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+    .divider {
+      max-width: 1200px; margin: 0 auto;
+      border: none; border-top: 1px solid var(--border);
+    }
+
+    /* ─── CARDS ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .card:hover { border-color: rgba(255,94,26,0.3); transform: translateY(-2px); }
+    .card-icon {
+      font-size: 1.8rem; margin-bottom: 14px;
+    }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem; font-weight: 700;
+      margin-bottom: 8px; color: var(--text);
+    }
+    .card-body {
+      font-size: 0.875rem; color: var(--muted); line-height: 1.7;
+    }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media(max-width:900px) {
+      .grid-3, .grid-4 { grid-template-columns: repeat(2,1fr); }
+    }
+    @media(max-width:600px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      section { padding: 60px 20px; }
+    }
+
+    /* ─── PROBLEM SECTION ───────────────────────────────────────── */
+    .problem-intro {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+      margin-bottom: 48px; align-items: start;
+    }
+    @media(max-width:768px){ .problem-intro { grid-template-columns: 1fr; } }
+    .problem-text p {
+      font-size: 0.95rem; color: #b0bbc8; line-height: 1.8; margin-bottom: 14px;
+    }
+    .problem-text p strong { color: var(--text); }
+    .impact-list {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .impact-item {
+      display: flex; gap: 14px; align-items: flex-start;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 18px;
+    }
+    .impact-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+    .impact-title { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .impact-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+    /* literature */
+    .lit-tag {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; color: var(--teal);
+      background: rgba(0,229,200,0.08);
+      border: 1px solid rgba(0,229,200,0.2);
+      border-radius: 4px; padding: 2px 8px;
+      margin-bottom: 8px; letter-spacing: 0.06em;
+    }
+    .gap-highlight {
+      background: linear-gradient(135deg, rgba(255,94,26,0.08), rgba(255,179,71,0.06));
+      border: 1px solid rgba(255,94,26,0.2);
+      border-left: 3px solid var(--accent);
+      border-radius: 12px; padding: 24px 28px;
+      margin-top: 36px;
+    }
+    .gap-highlight h3 {
+      font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+      color: var(--accent); margin-bottom: 12px;
+    }
+    .gap-highlight p { font-size: 0.875rem; color: #b0bbc8; line-height: 1.8; }
+    .gap-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .pill {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; padding: 5px 12px;
+      border-radius: 100px;
+      letter-spacing: 0.06em;
+    }
+    .pill-accent { background: rgba(255,94,26,0.12); color: var(--accent); border: 1px solid rgba(255,94,26,0.25); }
+    .pill-teal   { background: rgba(0,229,200,0.08);  color: var(--teal);   border: 1px solid rgba(0,229,200,0.2); }
+    .pill-blue   { background: rgba(59,130,246,0.1);  color: var(--blue);   border: 1px solid rgba(59,130,246,0.25); }
+
+    /* ─── METHODOLOGY ───────────────────────────────────────────── */
+    .pipeline {
+      display: flex; align-items: stretch; gap: 0;
+      margin-bottom: 48px; flex-wrap: wrap;
+    }
+    .pipe-step {
+      flex: 1; min-width: 140px;
+      background: var(--card); border: 1px solid var(--border);
+      padding: 20px 16px; text-align: center;
+      position: relative;
+      transition: background 0.25s;
+    }
+    .pipe-step:first-child { border-radius: 12px 0 0 12px; }
+    .pipe-step:last-child  { border-radius: 0 12px 12px 0; }
+    .pipe-step:not(:last-child)::after {
+      content: '→';
+      position: absolute; right: -13px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent); font-size: 1.1rem; z-index: 2;
+      background: var(--bg);
+    }
+    .pipe-step:hover { background: rgba(255,94,26,0.07); }
+    .pipe-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .pipe-name {
+      font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700;
+      color: var(--text); letter-spacing: 0.04em;
+    }
+    .pipe-sub { font-size: 0.68rem; color: var(--muted); margin-top: 4px; }
+
+    .data-table {
+      width: 100%; border-collapse: collapse; margin-bottom: 32px;
+      font-size: 0.85rem;
+    }
+    .data-table th {
+      font-family: 'Space Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 10px 16px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 12px 16px; color: #c0cdd8; line-height: 1.5;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .data-table tr:hover td { background: var(--card); }
+    .badge {
+      display: inline-block; font-family: 'Space Mono', monospace;
+      font-size: 9px; padding: 2px 8px; border-radius: 4px;
+      letter-spacing: 0.05em; font-weight: 700;
+    }
+    .badge-sat   { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .badge-iot   { background: rgba(0,229,200,0.12); color: var(--teal); }
+    .badge-meta  { background: rgba(255,179,71,0.15); color: var(--accent2); }
+    .badge-img   { background: rgba(255,94,26,0.12); color: var(--accent); }
+
+    /* architecture */
+    .arch-box {
+      border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden; background: var(--bg2);
+    }
+    .arch-header {
+      background: rgba(255,94,26,0.07);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; color: var(--accent); letter-spacing: 0.08em;
+    }
+    .arch-body { padding: 28px; }
+    .arch-layers { display: flex; flex-direction: column; gap: 8px; }
+    .arch-layer {
+      display: flex; align-items: center; gap: 0;
+      border-radius: 8px; overflow: hidden;
+    }
+    .layer-label {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      color: var(--muted); letter-spacing: 0.08em;
+      width: 80px; flex-shrink: 0; padding: 0 10px;
+      text-align: right;
+    }
+    .layer-blocks { display: flex; gap: 6px; flex: 1; }
+    .layer-block {
+      flex: 1; padding: 10px 12px; border-radius: 6px;
+      font-size: 0.72rem; font-weight: 600; text-align: center;
+      line-height: 1.3;
+    }
+    .lb-spatial { background: rgba(59,130,246,0.15); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
+    .lb-temporal{ background: rgba(0,229,200,0.1); color: var(--teal); border: 1px solid rgba(0,229,200,0.2); }
+    .lb-fusion  { background: rgba(255,179,71,0.12); color: var(--accent2); border: 1px solid rgba(255,179,71,0.2); }
+    .lb-output  { background: rgba(255,94,26,0.12); color: var(--accent); border: 1px solid rgba(255,94,26,0.25); }
+    .lb-input   { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+    .arch-arrow { text-align: center; color: rgba(255,94,26,0.4); font-size: 1.2rem; line-height: 1; }
+
+    /* loss formula */
+    .formula-box {
+      background: var(--bg3); border: 1px solid rgba(0,229,200,0.2);
+      border-radius: 10px; padding: 18px 24px; margin-top: 16px;
+      font-family: 'Space Mono', monospace; font-size: 0.85rem;
+      color: var(--teal); letter-spacing: 0.04em; text-align: center;
+    }
+    .formula-box span { color: var(--muted); font-size: 0.75rem; }
+
+    /* ─── RESULTS ───────────────────────────────────────────────── */
+    .results-hero {
+      display: grid; grid-template-columns: 1fr 2fr; gap: 32px;
+      margin-bottom: 40px; align-items: start;
+    }
+    @media(max-width:768px){ .results-hero { grid-template-columns: 1fr; } }
+    .big-metric {
+      background: linear-gradient(135deg, rgba(255,94,26,0.12), rgba(255,179,71,0.08));
+      border: 1px solid rgba(255,94,26,0.25);
+      border-radius: 16px; padding: 32px;
+      text-align: center;
+    }
+    .big-metric-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 4rem; font-weight: 800;
+      color: var(--accent); line-height: 1;
+      margin-bottom: 6px;
+    }
+    .big-metric-unit { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; }
+    .big-metric-label {
+      font-family: 'Syne', sans-serif; font-size: 0.9rem;
+      font-weight: 700; color: var(--text); margin-top: 10px;
+    }
+    .metric-bar-group { display: flex; flex-direction: column; gap: 14px; }
+    .metric-bar-item {}
+    .metric-bar-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 6px;
+    }
+    .metric-bar-name { font-size: 0.78rem; color: var(--text); font-weight: 500; }
+    .metric-bar-val { font-family: 'Space Mono', monospace; font-size: 0.78rem; color: var(--accent); }
+    .metric-bar-track {
+      height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px;
+      overflow: hidden;
+    }
+    .metric-bar-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* comparison table */
+    .results-table {
+      width: 100%; border-collapse: collapse; font-size: 0.85rem;
+      margin-bottom: 32px;
+    }
+    .results-table th {
+      font-family: 'Space Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .results-table th:first-child { text-align: left; }
+    .results-table td {
+      padding: 12px 16px; text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: #b0bbc8;
+    }
+    .results-table td:first-child { text-align: left; color: var(--text); font-weight: 500; }
+    .results-table tr.highlight td {
+      color: var(--accent); font-weight: 600;
+      background: rgba(255,94,26,0.06);
+    }
+    .results-table tr.highlight td:first-child { color: var(--accent); }
+    .results-table td.best { color: var(--teal); font-weight: 700; }
+
+    /* horizon chart */
+    .horizon-chart {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      margin-bottom: 32px;
+    }
+    @media(max-width:600px){ .horizon-chart { grid-template-columns: repeat(2,1fr); } }
+    .horizon-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px; text-align: center;
+      position: relative; overflow: hidden;
+      transition: border-color 0.25s;
+    }
+    .horizon-card:hover { border-color: rgba(255,94,26,0.3); }
+    .horizon-h { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 12px; }
+    .horizon-mae { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .horizon-unit { font-size: 0.65rem; color: var(--muted); }
+    .horizon-r2  { font-size: 0.75rem; color: var(--teal); margin-top: 6px; font-weight: 600; }
+    .horizon-fill {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(255,94,26,0.08), transparent);
+    }
+
+    /* spatial */
+    .zone-bars { display: flex; flex-direction: column; gap: 10px; }
+    .zone-bar-row { display: flex; align-items: center; gap: 12px; }
+    .zone-bar-name { font-size: 0.78rem; color: var(--muted); width: 160px; flex-shrink: 0; }
+    .zone-bar-outer {
+      flex: 1; height: 28px; background: rgba(255,255,255,0.05);
+      border-radius: 4px; overflow: hidden; position: relative;
+    }
+    .zone-bar-inner {
+      height: 100%; border-radius: 4px;
+      display: flex; align-items: center; padding-left: 10px;
+      font-family: 'Space Mono', monospace; font-size: 10px; color: #fff;
+      font-weight: 700;
+    }
+    .zone-bar-label { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); width: 50px; text-align: right; }
+
+    /* ablation */
+    .ablation-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    @media(max-width:600px){ .ablation-grid { grid-template-columns: 1fr; } }
+    .ablation-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 22px; text-align: center;
+    }
+    .ablation-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .ablation-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
+    .ablation-delta {
+      font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800;
+    }
+    .delta-pos { color: #f87171; }
+    .ablation-note { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+    /* ─── TEAM ──────────────────────────────────────────────────── */
+    #team-section { padding: 90px 40px 60px; max-width: 1200px; margin: 0 auto; }
+    .team-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    @media(max-width:768px){ .team-grid { grid-template-columns: 1fr; } }
+    .team-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px; text-align: center;
+      transition: border-color 0.25s;
+    }
+    .team-card:hover { border-color: var(--accent); }
+    .team-avatar {
+      width: 64px; height: 64px; border-radius: 16px;
+      margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800;
+    }
+    .av-guide { background: linear-gradient(135deg, rgba(255,94,26,0.3), rgba(255,179,71,0.2)); color: var(--accent); border: 1px solid rgba(255,94,26,0.3); }
+    .av-s1    { background: linear-gradient(135deg, rgba(0,229,200,0.2), rgba(59,130,246,0.15)); color: var(--teal); border: 1px solid rgba(0,229,200,0.25); }
+    .av-s2    { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(0,229,200,0.15)); color: var(--blue); border: 1px solid rgba(59,130,246,0.25); }
+    .team-role {
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .team-name {
+      font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700;
+      color: var(--text); margin-bottom: 4px;
+    }
+    .team-reg { font-size: 0.78rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+    .team-dept { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+
+    /* ─── FOOTER ─────────────────────────────────────────────────── */
+    footer {
+      text-align: center; padding: 32px 40px;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem; color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+    footer span { color: var(--accent); }
+
+    /* ─── ANIMATIONS ─────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── QUOTE ─────────────────────────────────────────────────── */
+    .quote-block {
+      border-left: 3px solid var(--teal);
+      padding: 16px 24px;
+      background: rgba(0,229,200,0.05);
+      border-radius: 0 10px 10px 0;
+      font-style: italic; font-size: 0.9rem; color: #a0b0c0;
+      margin: 24px 0;
+    }
+    .quote-block cite {
+      display: block; margin-top: 8px; font-size: 0.75rem;
+      color: var(--teal); font-style: normal; font-family: 'Space Mono', monospace;
+    }
+
+    /* deployment */
+    .deploy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px; }
+    @media(max-width:700px){ .deploy-grid { grid-template-columns: 1fr; } }
+    .cost-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .cost-table th { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    .cost-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #b0bbc8; }
+    .cost-table tr.total td { color: var(--accent); font-weight: 700; border-top: 1px solid rgba(255,94,26,0.2); }
+
+    /* tag */
+    .tag {
+      display: inline-block; font-family: 'Space Mono', monospace;
+      font-size: 10px; padding: 3px 10px; border-radius: 4px;
+      letter-spacing: 0.05em; margin: 2px;
+    }
+    .tag-accent { background: rgba(255,94,26,0.1); color: var(--accent); border: 1px solid rgba(255,94,26,0.2); }
+    .tag-teal   { background: rgba(0,229,200,0.08); color: var(--teal); border: 1px solid rgba(0,229,200,0.18); }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ NAV ═══════════════════════════════════════ -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">MUJ</div>
+    <div class="nav-title">PBL · DSE2170 · 2025</div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#methodology">Methodology</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#deployment">Deployment</a></li>
+    <li><a href="#team-section">Team</a></li>
+  </ul>
+  <div class="nav-timer" id="timer">00:00</div>
+</nav>
+
+
+<!-- ═══════════════════ HERO ══════════════════════════════════════ -->
+<section id="hero" style="max-width:100%;padding:80px 40px 60px;">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-badge">Project Based Learning · DSE2170</div>
+
+  <h1>
+    Hyperlocal <span class="accent">Urban Heat Index</span><br/>Forecasting
+  </h1>
+  <p class="hero-sub">
+    "Can a lightweight deep learning pipeline fusing satellite LST, street imagery, and IoT sensors deliver accurate 24–48 hour hyperlocal heat forecasts at neighborhood resolution?"
+  </p>
+
+  <div class="hero-meta">
+    <div class="hero-meta-item">Guide: <span>Dr. Sandeep Chaurasia</span></div>
+    <div class="hero-meta-item">Authors: <span>Akshit Goel · Swaraj Roy</span></div>
+    <div class="hero-meta-item">Dept: <span>CSE · Manipal University Jaipur</span></div>
+    <div class="hero-meta-item">Date: <span>November 2025</span></div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-val">0.72°C</div>
+      <div class="hero-stat-label">1h MAE</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">1.38°C</div>
+      <div class="hero-stat-label">24h MAE</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">R² 0.96</div>
+      <div class="hero-stat-label">1h Accuracy</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">4</div>
+      <div class="hero-stat-label">Data Modalities</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">48h</div>
+      <div class="hero-stat-label">Forecast Horizon</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════ PROBLEM ═══════════════════════════════════ -->
+<section id="problem">
+  <div class="section-header reveal">
+    <div class="section-num">01 —</div>
+    <h2 class="section-title">Problem <span class="accent">Statement</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="problem-intro reveal">
+    <div class="problem-text">
+      <p>
+        <strong>Urban Heat Islands (UHIs)</strong> are localized regions where urban temperatures significantly exceed surrounding rural areas — a direct consequence of heat-absorbing built surfaces, reduced vegetation cover, and anthropogenic heat release from vehicles, industry, and buildings.
+      </p>
+      <p>
+        The effects are not uniform. A single city can contain neighborhoods differing by <strong>up to 10°C</strong> at the same time, yet conventional weather forecasting operates at resolutions of 25–50 km, completely missing these life-critical micro-scale variations.
+      </p>
+      <p>
+        With climate change intensifying heatwave frequency and magnitude, the need for <strong>hyperlocal, actionable, near-term temperature forecasts</strong> — at the neighborhood (≤100 m) and hourly scale — has never been more urgent.
+      </p>
+      <div class="gap-pills" style="margin-top:16px;">
+        <span class="pill pill-accent">Urban Heat Island Effect</span>
+        <span class="pill pill-teal">Jaipur / Indian Cities</span>
+        <span class="pill pill-blue">Summer 2023–2025 Data</span>
+        <span class="pill pill-accent">100m Grid Resolution</span>
+      </div>
+    </div>
+
+    <div class="impact-list">
+      <div class="impact-item">
+        <div class="impact-icon">🌡️</div>
+        <div>
+          <div class="impact-title">Public Health Risk</div>
+          <div class="impact-desc">Heat-related mortality and morbidity surge during unforecasted extreme heat events. Vulnerable populations — elderly, outdoor workers, low-income households — bear disproportionate risk. 24–48h advance warning enables life-saving interventions.</div>
+        </div>
+      </div>
+      <div class="impact-item">
+        <div class="impact-icon">⚡</div>
+        <div>
+          <div class="impact-title">Energy Grid Stress</div>
+          <div class="impact-desc">Cooling demand spikes driven by urban heat islands create unpredictable peak loads. Hyperlocal forecasts enable demand-side pre-cooling and load balancing, reducing grid strain.</div>
+        </div>
+      </div>
+      <div class="impact-item">
+        <div class="impact-icon">🏙️</div>
+        <div>
+          <div class="impact-title">Urban Planning Blindspot</div>
+          <div class="impact-desc">City planners currently lack fine-grained thermal maps to guide green infrastructure placement, reflective pavement deployment, and cool corridor design.</div>
+        </div>
+      </div>
+      <div class="impact-item">
+        <div class="impact-icon">⚖️</div>
+        <div>
+          <div class="impact-title">Climate Equity</div>
+          <div class="impact-desc">Historically underserved neighborhoods often have lower tree cover and higher impervious surface fractions, amplifying UHI effects precisely where adaptive capacity is weakest.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Literature Review -->
+  <div class="section-header reveal" style="margin-top:56px;">
+    <div class="section-num">01.1 —</div>
+    <h2 class="section-title">Literature <span class="teal">Review</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid-3 reveal">
+    <div class="card">
+      <div class="lit-tag">FOUNDATIONAL</div>
+      <div class="card-title">UHI Phenomenology</div>
+      <div class="card-body">Oke (1982) established the energetic basis of UHIs — surface energy balance disruption caused by altered albedo, thermal mass, and reduced evapotranspiration. Voogt & Oke (2003) extended this to thermal remote sensing. Imhoff et al. (2010) quantified UHI intensity across USA biomes using MODIS data.</div>
+    </div>
+    <div class="card">
+      <div class="lit-tag">REMOTE SENSING</div>
+      <div class="card-title">Satellite LST Products</div>
+      <div class="card-body">Landsat 8/9 thermal bands (~100m, 16-day revisit) offer high spatial resolution. MODIS MOD11A1 provides daily 1km LST. Wan (2014) validated Collection-6 MODIS LST products. The core trade-off: Landsat for spatial detail vs. MODIS for temporal density — motivating data fusion approaches.</div>
+    </div>
+    <div class="card">
+      <div class="lit-tag">STREET IMAGERY</div>
+      <div class="card-title">Visual Urban Features</div>
+      <div class="card-body">Klimenko et al. (2023) demonstrated that infrared urban surface temperatures can be estimated from street-view imagery. Zhang et al. (2018) showed that Green View Index (GVI) from street scenes correlates with 0.5–1.5°C temperature reductions. Pretrained CNN embeddings provide compact micro-scale context.</div>
+    </div>
+    <div class="card">
+      <div class="lit-tag">IOT NETWORKS</div>
+      <div class="card-title">Dense Sensor Deployments</div>
+      <div class="card-body">Barthwal & Sharma (2022) demonstrated mobile IoT-based UHI detection. Hölken et al. (2025) deployed semantic-web-enabled IoT networks. Low-cost sensors (DHT22, SHT31) at ±0.3–0.5°C accuracy enable dense deployments ($5–15 per node) previously unaffordable with professional weather stations (~$700).</div>
+    </div>
+    <div class="card">
+      <div class="lit-tag">DEEP LEARNING</div>
+      <div class="card-title">Spatio-Temporal Models</div>
+      <div class="card-body">Hochreiter & Schmidhuber (1997) introduced LSTM for temporal sequences. Ronneberger et al. (2015) pioneered U-Net CNN encoders. Vaswani et al. (2017) introduced Transformers. Combining CNN spatial encoders with LSTM temporal modules represents a well-validated, implementable approach for environmental forecasting.</div>
+    </div>
+    <div class="card">
+      <div class="lit-tag">HEALTH IMPACT</div>
+      <div class="card-title">Heat Mortality Studies</div>
+      <div class="card-body">Gasparrini et al. (2015, The Lancet) found heat-attributable mortality accounts for 0.5–1.5% of deaths in warm regions. Eisenman et al. (2016) linked built environment characteristics directly to heat-related mortality. Climate Central (2024) identified 65 cities with critical urban heat hotspots.</div>
+    </div>
+  </div>
+
+  <!-- Research Gap -->
+  <div class="gap-highlight reveal">
+    <h3>🔬 Research Gap &amp; Our Innovation</h3>
+    <p>
+      Existing systems are either <strong>too coarse</strong> (ERA5 at 25km cannot resolve neighborhood-scale variation), <strong>too slow</strong> (Landsat revisits every 16 days), or <strong>too expensive</strong> (dense professional sensor networks cost $700+ per node). No existing deployed system simultaneously fuses satellite LST, street-level visual features, and IoT sensor readings into a single lightweight model for hyperlocal 24–48h forecasting at 100m resolution with practical cost constraints.
+    </p>
+    <p style="margin-top:12px;">
+      <strong>Our contribution:</strong> A practical, reproducible CNN+LSTM pipeline that fuses all three modalities, deployable on a single GPU with ~$20,000 annual operating cost for a 100km² city pilot — making hyperlocal heat forecasting accessible to municipal governments in developing economies.
+    </p>
+    <div class="gap-pills" style="margin-top:12px;">
+      <span class="pill pill-accent">Multi-Modal Fusion</span>
+      <span class="pill pill-accent">100m Grid Resolution</span>
+      <span class="pill pill-teal">24–48h Forecast</span>
+      <span class="pill pill-teal">Lightweight CNN+LSTM</span>
+      <span class="pill pill-blue">Low-Cost IoT Integration</span>
+      <span class="pill pill-blue">Open Data Sources</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════ METHODOLOGY ═══════════════════════════════ -->
+<section id="methodology">
+  <div class="section-header reveal">
+    <div class="section-num">02 —</div>
+    <h2 class="section-title">System <span class="teal">Methodology</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="pipeline reveal">
+    <div class="pipe-step">
+      <div class="pipe-icon">🛰️</div>
+      <div class="pipe-name">Data Ingestion</div>
+      <div class="pipe-sub">Satellite · IoT · ERA5</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">🔧</div>
+      <div class="pipe-name">QC + Alignment</div>
+      <div class="pipe-sub">100m UTM Grid</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">🖼️</div>
+      <div class="pipe-name">Feature Extraction</div>
+      <div class="pipe-sub">CNN Embeddings</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">🧠</div>
+      <div class="pipe-name">CNN+LSTM Model</div>
+      <div class="pipe-sub">Spatial + Temporal</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">📊</div>
+      <div class="pipe-name">Forecast Output</div>
+      <div class="pipe-sub">1h · 6h · 24h · 48h</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">🔔</div>
+      <div class="pipe-name">Alerting</div>
+      <div class="pipe-sub">Dashboard · SMS</div>
+    </div>
+  </div>
+
+  <!-- Data Sources -->
+  <div class="section-header reveal" style="margin-bottom:24px;">
+    <div class="section-num">02.1 —</div>
+    <h2 class="section-title" style="font-size:1.4rem;">Dataset &amp; <span class="accent">Input Sources</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="reveal">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Type</th>
+          <th>Resolution</th>
+          <th>Role in Pipeline</th>
+          <th>Access</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Landsat 8/9 (USGS Collection 2 L2)</strong></td>
+          <td><span class="badge badge-sat">SATELLITE</span></td>
+          <td>~100m LST · 16-day</td>
+          <td>High-resolution spatial surface temperature baseline; anchors spatial patterns on 100m grid</td>
+          <td>USGS / Google Earth Engine</td>
+        </tr>
+        <tr>
+          <td><strong>MODIS MOD11A1 / MYD11A1</strong></td>
+          <td><span class="badge badge-sat">SATELLITE</span></td>
+          <td>1km · Daily LST</td>
+          <td>Fills temporal gaps between Landsat passes; captures day/night LST trends over 8-day composites</td>
+          <td>NASA LP DAAC / GEE</td>
+        </tr>
+        <tr>
+          <td><strong>ERA5 Reanalysis (Copernicus)</strong></td>
+          <td><span class="badge badge-meta">METEO</span></td>
+          <td>~31km · Hourly</td>
+          <td>Meteorological context: 2m temperature, wind speed, shortwave/longwave radiation; large-scale weather influence</td>
+          <td>Copernicus CDS / GEE</td>
+        </tr>
+        <tr>
+          <td><strong>NOAA ISD (Ground Station)</strong></td>
+          <td><span class="badge badge-iot">GROUND</span></td>
+          <td>Point · Hourly</td>
+          <td>Ground truth target for model training; Jaipur Airport station (USAF 423490) used as validation anchor</td>
+          <td>NOAA NCEI / Microsoft AI Earth</td>
+        </tr>
+        <tr>
+          <td><strong>IoT Sensors (DHT22 / SHT31)</strong></td>
+          <td><span class="badge badge-iot">IOT</span></td>
+          <td>Point · Hourly</td>
+          <td>Hyperlocal air temperature and humidity; 150 nodes at 100–300m spacing; LoRaWAN transmission; quality-controlled</td>
+          <td>Deployed Network ($5–15/node)</td>
+        </tr>
+        <tr>
+          <td><strong>Mapillary / Google Street View</strong></td>
+          <td><span class="badge badge-img">IMAGERY</span></td>
+          <td>Point Images</td>
+          <td>ResNet-50 CNN embeddings (2048-d → 64-d PCA); Green View Index, Sky View Factor proxies for canopy context</td>
+          <td>Mapillary API / GSV API</td>
+        </tr>
+        <tr>
+          <td><strong>NLCD / Local Land-Cover</strong></td>
+          <td><span class="badge badge-meta">STATIC</span></td>
+          <td>30m Vector</td>
+          <td>Static covariates: impervious surface fraction, land-use class, vulnerability overlay for equity mapping</td>
+          <td>USGS / Municipal GIS</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quote-block reveal">
+    "Summer months (June–August) across 2–3 years. Sensor deployment: 48 nodes downtown at 100m spacing, 52 residential at 300m, 18 industrial at 500m, 12 parks at 400m. Total: 150 low-cost sensors + 3 reference-grade Davis Vantage Pro2 stations for calibration."
+    <cite>— Pilot Study Configuration, City of Jaipur (~100–800 km²)</cite>
+  </div>
+
+  <!-- Model Architecture -->
+  <div class="section-header reveal" style="margin-bottom:24px;margin-top:48px;">
+    <div class="section-num">02.2 —</div>
+    <h2 class="section-title" style="font-size:1.4rem;">Model <span class="teal">Architecture</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid-2 reveal">
+    <div class="arch-box">
+      <div class="arch-header">▶ CNN + LSTM ARCHITECTURE</div>
+      <div class="arch-body">
+        <div class="arch-layers">
+          <div style="text-align:center;margin-bottom:8px;">
+            <span class="tag tag-teal">INPUT: Multi-Modal Feature Vector / Patch</span>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-layer">
+            <div class="layer-label">SPATIAL</div>
+            <div class="layer-blocks">
+              <div class="layer-block lb-spatial">3–4 Layer CNN<br/><small>7×7 LST Patch</small></div>
+              <div class="layer-block lb-spatial">ReLU + BatchNorm<br/><small>Spatial Features</small></div>
+              <div class="layer-block lb-fusion">Concat<br/><small>64-d PCA + Static</small></div>
+            </div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-layer">
+            <div class="layer-label">TEMPORAL</div>
+            <div class="layer-blocks">
+              <div class="layer-block lb-temporal">2-Layer LSTM<br/><small>256 hidden units</small></div>
+              <div class="layer-block lb-temporal">24h Sequence<br/><small>t−24 → t</small></div>
+              <div class="layer-block lb-temporal">Teacher Forcing<br/><small>Multi-step</small></div>
+            </div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-layer">
+            <div class="layer-label">HEAD</div>
+            <div class="layer-blocks">
+              <div class="layer-block lb-output">MLP (2-layer)<br/><small>Prediction Head</small></div>
+              <div class="layer-block lb-output">Horizons<br/><small>1h / 6h / 24h / 48h</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="formula-box" style="margin-top:18px;">
+          ℒ = 0.7 · MSE(T, T̂) + 0.3 · MAE(T, T̂)
+          <div><span>Composite loss · α=0.7 (MSE) · β=0.3 (MAE) · AdamW · LR=1e-4</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card">
+        <div class="card-icon">🔭</div>
+        <div class="card-title">Spatial Encoder (CNN)</div>
+        <div class="card-body">A 3–4 layer CNN ingests a 7×7 neighborhood patch of LST + static channels around each grid cell. ReLU activations and batch normalization extract localized spatial features. Street-image PCA embeddings (64-d, reduced from ResNet-50's 2048-d) and static covariates are concatenated to the flattened CNN output to form a rich spatial representation.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⏱️</div>
+        <div class="card-title">Temporal Model (LSTM)</div>
+        <div class="card-body">A two-layer LSTM processes 24-hour sequences of fused spatial embeddings plus lagged sensor readings (t−24 to t). Hidden dimension is kept at 256 units to maintain practical compute requirements. Teacher-forcing during training stabilizes multi-step prediction. Validation uses held-out whole-day blocks to prevent temporal data leakage.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚙️</div>
+        <div class="card-title">Training Configuration</div>
+        <div class="card-body">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+            <span class="tag tag-accent">AdamW Optimizer</span>
+            <span class="tag tag-accent">LR: 1×10⁻⁴</span>
+            <span class="tag tag-teal">Batch: 32</span>
+            <span class="tag tag-teal">Max 80 Epochs</span>
+            <span class="tag tag-accent">Early Stop: 10</span>
+          </div>
+          Data split: 70% training · 15% validation · 15% test — all in continuous temporal blocks to simulate real deployment conditions. Augmentation: spatial flips for CNN patches + time dropout for robustness.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preprocessing -->
+  <div class="section-header reveal" style="margin-bottom:24px;margin-top:48px;">
+    <div class="section-num">02.3 —</div>
+    <h2 class="section-title" style="font-size:1.4rem;">Preprocessing &amp; <span class="accent">Multi-Modal Fusion</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid-4 reveal">
+    <div class="card">
+      <div class="card-icon">🗺️</div>
+      <div class="card-title">Spatial Harmonization</div>
+      <div class="card-body">All sources reprojected to common UTM zone. Satellite rasters resampled bilinearly to 100m×100m. IoT point values spatially interpolated via inverse-distance weighting within 500m radius.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🕐</div>
+      <div class="card-title">Temporal Harmonization</div>
+      <div class="card-body">Sensor readings aggregated to hourly averages. MODIS daily values assigned to nearest hour. Landsat scenes used as spatial baselines with conservative linear interpolation between passes.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🖼️</div>
+      <div class="card-title">Street Image Features</div>
+      <div class="card-body">ResNet-50 (ImageNet weights) truncated at global pooling layer. 2048-d feature vectors reduced via PCA to 64-d. Green View Index (GVI) and Sky View Factor (SVF) proxies computed via semantic segmentation heuristics.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">✅</div>
+      <div class="card-title">Quality Control</div>
+      <div class="card-body">Sensor time series screened for outliers (Z-score > 4) and drift patterns. 3 Davis Vantage Pro2 reference stations used to periodically recalibrate low-cost sensor subsets via linear regression correction.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════ RESULTS ════════════════════════════════════ -->
+<section id="results">
+  <div class="section-header reveal">
+    <div class="section-num">03 —</div>
+    <h2 class="section-title">Results &amp; <span class="accent">Analysis</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <!-- Top metric -->
+  <div class="results-hero reveal">
+    <div class="big-metric">
+      <div class="big-metric-val">86%</div>
+      <div class="big-metric-unit">R² EXPLAINED VARIANCE</div>
+      <div class="big-metric-label">24-Hour Forecast Accuracy</div>
+      <div style="margin-top:16px;font-size:0.78rem;color:var(--muted);line-height:1.6;">
+        Versus <span style="color:#f87171;">31%</span> for climatology baseline.<br/>
+        <span style="color:var(--accent2);">+55 percentage points improvement.</span><br/>
+        MAE: 1.38°C vs 2.9°C baseline.
+      </div>
+    </div>
+    <div class="metric-bar-group">
+      <div style="font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:16px;">Model vs Baselines — 24h Horizon</div>
+      <div class="metric-bar-item">
+        <div class="metric-bar-header"><span class="metric-bar-name">🤖 CNN+LSTM (Ours)</span><span class="metric-bar-val">MAE 1.38°C · R² 0.86</span></div>
+        <div class="metric-bar-track"><div class="metric-bar-fill" style="width:87%;background:linear-gradient(90deg,var(--accent),var(--accent2));"></div></div>
+      </div>
+      <div class="metric-bar-item">
+        <div class="metric-bar-header"><span class="metric-bar-name">📈 SARIMAX</span><span class="metric-bar-val">MAE 2.0°C · R² 0.61</span></div>
+        <div class="metric-bar-track"><div class="metric-bar-fill" style="width:61%;background:rgba(0,229,200,0.6);"></div></div>
+      </div>
+      <div class="metric-bar-item">
+        <div class="metric-bar-header"><span class="metric-bar-name">📍 IDW + Persistence</span><span class="metric-bar-val">MAE 2.1°C · R² 0.58</span></div>
+        <div class="metric-bar-track"><div class="metric-bar-fill" style="width:58%;background:rgba(59,130,246,0.6);"></div></div>
+      </div>
+      <div class="metric-bar-item">
+        <div class="metric-bar-header"><span class="metric-bar-name">🔁 Persistence</span><span class="metric-bar-val">MAE 2.4°C · R² 0.52</span></div>
+        <div class="metric-bar-track"><div class="metric-bar-fill" style="width:52%;background:rgba(255,255,255,0.2);"></div></div>
+      </div>
+      <div class="metric-bar-item">
+        <div class="metric-bar-header"><span class="metric-bar-name">📅 Climatology</span><span class="metric-bar-val">MAE 2.9°C · R² 0.31</span></div>
+        <div class="metric-bar-track"><div class="metric-bar-fill" style="width:31%;background:rgba(248,113,113,0.5);"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Horizon table -->
+  <div class="section-header reveal" style="margin-bottom:20px;">
+    <div class="section-num">03.1 —</div>
+    <h2 class="section-title" style="font-size:1.3rem;">Forecast <span class="teal">Performance by Horizon</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="horizon-chart reveal">
+    <div class="horizon-card">
+      <div class="horizon-fill" style="height:95%;"></div>
+      <div class="horizon-h">1-HOUR AHEAD</div>
+      <div class="horizon-mae">0.72</div>
+      <div class="horizon-unit">°C MAE</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;">RMSE: 0.95°C</div>
+      <div class="horizon-r2">R² = 0.96</div>
+    </div>
+    <div class="horizon-card">
+      <div class="horizon-fill" style="height:80%;"></div>
+      <div class="horizon-h">6-HOUR AHEAD</div>
+      <div class="horizon-mae">1.01</div>
+      <div class="horizon-unit">°C MAE</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;">RMSE: 1.33°C</div>
+      <div class="horizon-r2">R² = 0.92</div>
+    </div>
+    <div class="horizon-card" style="border-color:rgba(255,94,26,0.35);">
+      <div class="horizon-fill" style="height:65%;"></div>
+      <div class="horizon-h" style="color:var(--accent);">24-HOUR AHEAD ★</div>
+      <div class="horizon-mae" style="color:var(--accent);">1.38</div>
+      <div class="horizon-unit">°C MAE</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;">RMSE: 1.90°C</div>
+      <div class="horizon-r2">R² = 0.86</div>
+    </div>
+    <div class="horizon-card">
+      <div class="horizon-fill" style="height:50%;"></div>
+      <div class="horizon-h">48-HOUR AHEAD</div>
+      <div class="horizon-mae">1.72</div>
+      <div class="horizon-unit">°C MAE</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;">RMSE: 2.35°C</div>
+      <div class="horizon-r2">R² = 0.78</div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-bottom:40px;">
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>MAE (°C)</th>
+          <th>RMSE (°C)</th>
+          <th>R²</th>
+          <th>Improvement vs Persistence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Climatology</td><td>2.9</td><td>3.6</td><td>0.31</td><td>—</td></tr>
+        <tr><td>Persistence</td><td>2.4</td><td>3.0</td><td>0.52</td><td>Baseline</td></tr>
+        <tr><td>SARIMAX + Meteo</td><td>2.0</td><td>2.6</td><td>0.61</td><td>−17% MAE</td></tr>
+        <tr><td>IDW + Persistence</td><td>2.1</td><td>2.7</td><td>0.58</td><td>−13% MAE</td></tr>
+        <tr class="highlight"><td>🏆 CNN+LSTM (Ours)</td><td class="best">1.38</td><td class="best">1.90</td><td class="best">0.86</td><td class="best">−43% MAE</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Spatial Error -->
+  <div class="section-header reveal" style="margin-bottom:20px;">
+    <div class="section-num">03.2 —</div>
+    <h2 class="section-title" style="font-size:1.3rem;">Spatial <span class="accent">Error by Urban Zone</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid-2 reveal">
+    <div>
+      <div class="zone-bars">
+        <div class="zone-bar-row">
+          <div class="zone-bar-name">Dense Urban Core</div>
+          <div class="zone-bar-outer">
+            <div class="zone-bar-inner" style="width:56%;background:linear-gradient(90deg,rgba(0,229,200,0.5),rgba(0,229,200,0.3));">1.12°C MAE</div>
+          </div>
+          <div class="zone-bar-label">RMSE 1.45</div>
+        </div>
+        <div class="zone-bar-row">
+          <div class="zone-bar-name">Residential Suburban</div>
+          <div class="zone-bar-outer">
+            <div class="zone-bar-inner" style="width:68%;background:linear-gradient(90deg,rgba(255,179,71,0.5),rgba(255,179,71,0.3));">1.36°C MAE</div>
+          </div>
+          <div class="zone-bar-label">RMSE 1.84</div>
+        </div>
+        <div class="zone-bar-row">
+          <div class="zone-bar-name">Industrial</div>
+          <div class="zone-bar-outer">
+            <div class="zone-bar-inner" style="width:74%;background:linear-gradient(90deg,rgba(255,94,26,0.5),rgba(255,94,26,0.3));">1.47°C MAE</div>
+          </div>
+          <div class="zone-bar-label">RMSE 1.99</div>
+        </div>
+        <div class="zone-bar-row">
+          <div class="zone-bar-name">Parks / Green Spaces</div>
+          <div class="zone-bar-outer">
+            <div class="zone-bar-inner" style="width:81%;background:linear-gradient(90deg,rgba(248,113,113,0.5),rgba(248,113,113,0.3));">1.61°C MAE</div>
+          </div>
+          <div class="zone-bar-label">RMSE 2.12</div>
+        </div>
+        <div class="zone-bar-row">
+          <div class="zone-bar-name">Waterfront</div>
+          <div class="zone-bar-outer">
+            <div class="zone-bar-inner" style="width:85%;background:linear-gradient(90deg,rgba(248,113,113,0.6),rgba(248,113,113,0.35));">1.70°C MAE</div>
+          </div>
+          <div class="zone-bar-label">RMSE 2.25</div>
+        </div>
+      </div>
+      <p style="font-size:0.78rem;color:var(--muted);margin-top:14px;line-height:1.6;">
+        Dense urban cores achieve lowest errors due to higher sensor density and more predictable thermal patterns. Parks and waterfronts have highest errors due to fine-scale canopy microclimate variability not fully captured at 100m resolution.
+      </p>
+    </div>
+
+    <!-- Ablation -->
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:16px;">Ablation Study — Modality Contribution (24h MAE)</div>
+      <div class="ablation-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="ablation-card">
+          <div class="ablation-icon">🌡️</div>
+          <div class="ablation-label">Without IoT Sensors</div>
+          <div class="ablation-delta delta-pos">+35%</div>
+          <div class="ablation-note">1.38 → 1.86°C MAE</div>
+        </div>
+        <div class="ablation-card">
+          <div class="ablation-icon">🖼️</div>
+          <div class="ablation-label">Without Street Images</div>
+          <div class="ablation-delta delta-pos">+15%</div>
+          <div class="ablation-note">1.38 → 1.59°C MAE</div>
+        </div>
+        <div class="ablation-card" style="grid-column:span 2;">
+          <div class="ablation-icon">🛰️</div>
+          <div class="ablation-label">Satellite-Only (CNN on LST patches)</div>
+          <div class="ablation-delta delta-pos">+48%</div>
+          <div class="ablation-note">1.38 → 2.05°C MAE — validates multi-modal fusion</div>
+        </div>
+      </div>
+      <div class="quote-block" style="margin-top:16px;font-size:0.8rem;">
+        "IoT sensors are the single most important modality — removing them degrades accuracy by 35%. Street imagery adds 15% on top. This justifies both the sensor deployment cost and the image processing overhead."
+        <cite>— Ablation Analysis, Section 6.6</cite>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════ DEPLOYMENT ════════════════════════════════ -->
+<section id="deployment">
+  <div class="section-header reveal">
+    <div class="section-num">04 —</div>
+    <h2 class="section-title">Deployment &amp; <span class="teal">System Architecture</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="deploy-grid reveal">
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card">
+        <div class="card-icon">📥</div>
+        <div class="card-title">Data Ingestion Layer</div>
+        <div class="card-body">
+          Four parallel ingestion streams: Satellite LST (Landsat/MODIS via GEE), Street Imagery (GSV/Mapillary API), IoT Sensors via MQTT/LoRaWAN gateways, and Meteorological reanalysis (ERA5/HRRR). All streams land in AWS S3 / GCS object storage for raw data persistence.
+          <div style="margin-top:8px;"><span class="tag tag-teal">MQTT</span><span class="tag tag-teal">LoRaWAN</span><span class="tag tag-accent">GEE API</span><span class="tag tag-accent">AWS S3</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <div class="card-title">ETL + Feature Store</div>
+        <div class="card-body">
+          AWS Lambda / Cloud Functions handle serverless ETL. Processed data flows to three stores: PostGIS (spatial rasters/vectors), TimescaleDB (time-series sensor data), and Redis (hot feature cache for inference). Scheduled hourly runs keep feature store current.
+          <div style="margin-top:8px;"><span class="tag tag-teal">PostGIS</span><span class="tag tag-teal">TimescaleDB</span><span class="tag tag-accent">Redis Cache</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">ML Training &amp; Registry</div>
+        <div class="card-body">
+          Model training on SageMaker / Vertex AI GPU cluster (single NVIDIA T4/V100 sufficient for pilot). MLflow / W&B model registry tracks experiments and versions. Automated retraining triggered when data drift is detected.
+          <div style="margin-top:8px;"><span class="tag tag-accent">SageMaker</span><span class="tag tag-accent">MLflow</span><span class="tag tag-teal">NVIDIA T4</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🚀</div>
+        <div class="card-title">Inference &amp; Alerting</div>
+        <div class="card-body">
+          FastAPI inference service provides REST/GraphQL endpoints for 1h/6h/24h/48h forecasts. Mapbox/Plotly dashboard renders live heat maps. Alerting system triggers SMS/email when forecasts exceed threshold temperatures for vulnerability-weighted neighborhoods.
+          <div style="margin-top:8px;"><span class="tag tag-teal">FastAPI</span><span class="tag tag-teal">Mapbox</span><span class="tag tag-accent">SMS Alerts</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="arch-box">
+        <div class="arch-header">💰 PILOT COST ESTIMATE — 100 km² · 150 SENSORS</div>
+        <div class="arch-body">
+          <table class="cost-table">
+            <thead>
+              <tr><th>Category</th><th>Cost</th><th>Type</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>150 Low-cost Sensors (DHT22/SHT31)</td><td>$2,500</td><td>One-time</td></tr>
+              <tr><td>3 Reference Stations (Davis Pro2)</td><td>$2,100</td><td>One-time</td></tr>
+              <tr><td>LoRaWAN Gateways + Connectivity</td><td>$1,500</td><td>One-time</td></tr>
+              <tr><td>Cloud Storage (1TB AWS S3)</td><td>$300</td><td>Annual</td></tr>
+              <tr><td>Training Compute (Spot GPU)</td><td>$1,500</td><td>Annual</td></tr>
+              <tr><td>Serving Infrastructure (VMs)</td><td>$600</td><td>Annual</td></tr>
+              <tr><td>Personnel (0.4 FTE)</td><td>$12,000</td><td>Annual</td></tr>
+              <tr class="total"><td>Total (First Year)</td><td>~$20,000</td><td>All-in</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:18px;font-size:0.78rem;color:var(--muted);line-height:1.7;">
+            This cost profile makes the system accessible to mid-size municipal governments in developing economies. For comparison, a traditional dense professional weather station network for the same area would cost 10–20× more, and commercial weather data subscriptions at neighborhood resolution don't currently exist.
+          </div>
+        </div>
+      </div>
+
+      <div class="gap-highlight" style="margin-top:20px;">
+        <h3>🎯 Use Cases &amp; Societal Impact</h3>
+        <div class="grid-2" style="gap:12px;margin-top:12px;">
+          <div style="font-size:0.82rem;color:#b0bbc8;"><strong style="color:var(--text);">Urban Planning</strong> — Hyperlocal forecasts guide placement of green infrastructure, cool pavements, reflective roofing. Scenario modelling quantifies cooling benefits (e.g., 20% albedo increase → 0.8°C reduction).</div>
+          <div style="font-size:0.82rem;color:#b0bbc8;"><strong style="color:var(--text);">Public Health</strong> — 24–48h advance warnings enable cooling center activation, vulnerable population outreach, and heat emergency resource pre-positioning.</div>
+          <div style="font-size:0.82rem;color:#b0bbc8;"><strong style="color:var(--text);">Energy Management</strong> — Short-term forecasts support demand-side pre-cooling schedules, reducing peak electricity loads and grid instability during heatwaves.</div>
+          <div style="font-size:0.82rem;color:#b0bbc8;"><strong style="color:var(--text);">Climate Equity</strong> — Prioritize sensor placement in historically underserved neighborhoods; aggregate outputs to neighborhood-level before public release to protect privacy.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Limitations -->
+  <div class="section-header reveal" style="margin-top:48px;margin-bottom:24px;">
+    <div class="section-num">04.1 —</div>
+    <h2 class="section-title" style="font-size:1.3rem;">Limitations &amp; <span class="accent">Future Work</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid-2 reveal">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#f87171;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:14px;">⚠ Current Limitations</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="impact-item"><div class="impact-icon">🔋</div><div><div class="impact-title">Sensor Drift</div><div class="impact-desc">Low-cost sensors require periodic re-calibration against reference stations. Drift of ±0.3–0.8°C observed over 3-month deployment windows.</div></div></div>
+        <div class="impact-item"><div class="impact-icon">☁️</div><div><div class="impact-title">Landsat Cloud Cover</div><div class="impact-desc">16-day revisit with cloud contamination reduces spatial LST availability in monsoon months. MODIS fills gaps but at 10× coarser resolution.</div></div></div>
+        <div class="impact-item"><div class="impact-icon">🌍</div><div><div class="impact-title">City Transferability</div><div class="impact-desc">Models trained on one city require transfer learning for different climate zones, urban morphologies, and seasonal patterns.</div></div></div>
+        <div class="impact-item"><div class="impact-icon">🌊</div><div><div class="impact-title">Complex Microclimates</div><div class="impact-desc">Waterfronts, dense tree canopies, and steep topography create sub-100m thermal variability that 100m grid cannot fully resolve.</div></div></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:var(--teal);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:14px;">🔮 Future Work</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="impact-item"><div class="impact-icon">🌬️</div><div><div class="impact-title">Heat Stress Indices</div><div class="impact-desc">Integrate humidity and wind more tightly to model apparent temperature, WBGT, and physiologically meaningful heat stress indices.</div></div></div>
+        <div class="impact-item"><div class="impact-icon">📊</div><div><div class="impact-title">Probabilistic Forecasting</div><div class="impact-desc">Quantile regression and ensemble methods to produce calibrated uncertainty bands, enabling risk-aware decision making for health authorities.</div></div></div>
+        <div class="impact-item"><div class="impact-icon">🔄</div><div><div class="impact-title">Cross-City Transfer Learning</div><div class="impact-desc">Semi-supervised domain adaptation to transfer models across cities with minimal local sensor data — enabling rapid deployment in data-scarce regions.</div></div></div>
+        <div class="impact-item"><div class="impact-icon">📱</div><div><div class="impact-title">Citizen Science</div><div class="impact-desc">Smartphone-based opportunistic sensing (GPS + on-device temperature) for hyper-dense observations, particularly in areas with limited IoT deployment budgets.</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════ TEAM ═══════════════════════════════════════ -->
+<section id="team-section" style="padding:80px 40px 80px;max-width:1200px;margin:0 auto;">
+  <div class="section-header reveal">
+    <div class="section-num">05 —</div>
+    <h2 class="section-title">Academic <span class="teal">Credits</span></h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="team-grid reveal">
+    <div class="team-card">
+      <div class="team-avatar av-guide">SC</div>
+      <div class="team-role">Project Guide</div>
+      <div class="team-name">Dr. Sandeep Chaurasia</div>
+      <div class="team-dept">School of Computer Science &amp; Engineering<br/>Manipal University Jaipur</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar av-s1">AG</div>
+      <div class="team-role">Student — Team Member 1</div>
+      <div class="team-name">Akshit Goel</div>
+      <div class="team-reg">2427030638</div>
+      <div class="team-dept">B.Tech Computer Science &amp; Engineering<br/>MUJ · Batch 2024–28</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar av-s2">SR</div>
+      <div class="team-role">Student — Team Member 2</div>
+      <div class="team-name">Swaraj Roy</div>
+      <div class="team-reg">2427030627</div>
+      <div class="team-dept">B.Tech Computer Science &amp; Engineering<br/>MUJ · Batch 2024–28</div>
+    </div>
+  </div>
+
+
+</section>
+
+
+<!-- ═══════════════════ FOOTER ════════════════════════════════════ -->
+<footer>
+  <span>Manipal University Jaipur</span> &nbsp;·&nbsp;
+  Department of Computer Science &amp; Engineering &nbsp;·&nbsp;
+  Project Based Learning DSE2170 &nbsp;·&nbsp;
+  <span>November 2025</span>
+</footer>
+
+
+<!-- ═══════════════════ SCRIPTS ═══════════════════════════════════ -->
+<script>
+  // ─── TIMER ───────────────────────────────────────────────────────
+  let start = Date.now();
+  setInterval(() => {
+    const s = Math.floor((Date.now() - start) / 1000);
+    document.getElementById('timer').textContent =
+      String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }, 1000);
+
+  // ─── SCROLL REVEAL ───────────────────────────────────────────────
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ─── SMOOTH ACTIVE NAV ───────────────────────────────────────────
+  const sections = document.querySelectorAll('section[id], section[id="team-section"]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 100) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#'+current ? 'var(--accent)' : '';
+      a.style.borderColor = a.getAttribute('href') === '#'+current ? 'var(--accent)' : '';
+      a.style.background = a.getAttribute('href') === '#'+current ? 'rgba(255,94,26,0.06)' : '';
+    });
+  });
+</script>
+</body>
+</html>
